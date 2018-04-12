@@ -9,7 +9,7 @@ let dataset = [new Entity.Content(44, "foo")];
 queue.setState(dataset)
 
 ReactDOM.render(
-  queue.render(),
+  <Componenets.Hello compiler="asd" framework="asd"/>,
   document.getElementById("root")
 );
 
