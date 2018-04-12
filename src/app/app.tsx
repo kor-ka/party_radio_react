@@ -3,23 +3,23 @@ import * as ReactDOM from 'react-dom';
 import {Componenets} from './componenets'
 import {Entity} from './entity'
 
-let queue = new Componenets.TrackQueue({})
+let queue: Componenets.TrackQueue
+let dataset:Entity.Content[] = []
 
-let dataset = [new Entity.Content(44, "foo")];
-queue.setState(dataset)
-
-ReactDOM.render(
-  <Componenets.Hello compiler="asd" framework="asd"/>,
+queue = ReactDOM.render(
+  <Componenets.TrackQueue/>,
   document.getElementById("root")
-);
+) as Componenets.TrackQueue;
 
-let count = 1; 
+let count = 0; 
 setInterval(function(){
-  dataset.slice().push(new Entity.Content(++count, ""))
-  queue.setState(dataset)
+  
+  if(count < 5){
+    dataset = dataset.concat()
+    dataset.push(new Entity.Content(++count, ""))
+    queue.setState({data:dataset})
+  }
+  
+  
 },1000);
 
-
-setInterval(function(){
-  console.log("asasdasd")
-},1000);

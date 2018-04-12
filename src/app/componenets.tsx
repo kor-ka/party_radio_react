@@ -12,7 +12,8 @@ export module Componenets {
         );
     }
 
-    export class ContentEntry extends React.Component<{data:Entity.Content}, {}>{
+    export class ContentEntry extends React.Component<{key:number, data:Entity.Content}, {}>{
+        
         render(){
             return(
                 <div>
@@ -23,12 +24,21 @@ export module Componenets {
     }
 
     
-    export class TrackQueue extends React.Component<{}, Entity.Content[]>{
+    export class TrackQueue extends React.Component<{}, {data:Entity.Content[]}>{
         render(){
             let entries = []
-            this.state.forEach(c => {
-                entries.push(<ContentEntry data={c}/>);
-            })
+
+            if(this.state && this.state.data){
+                for(let e of this.state.data){
+                    entries.push(<ContentEntry key={e.originalId} data={e}/>);
+                }
+                
+                
+
+                
+            }
+
+        
             return(<div>
             {entries}
             </div>);
