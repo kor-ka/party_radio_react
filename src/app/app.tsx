@@ -7,7 +7,7 @@ let queue: Componenets.TrackQueue
 let dataset:Entity.Content[] = []
 
 queue = ReactDOM.render(
-  <Componenets.TrackQueue/>,
+  <Componenets.Header/>,
   document.getElementById("root")
 ) as Componenets.TrackQueue;
 

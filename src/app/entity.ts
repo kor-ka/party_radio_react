@@ -4,7 +4,7 @@ export module Entity {
     export class Content{
         originalId:number
         src:string
-        data:{}
+        title:string
 
         constructor(originalId:number,
             src:string){
@@ -22,6 +22,13 @@ export module Entity {
         }
     }
 
+    export class HeaderData{
+        avatar:string
+        title:string
+        currentAuthor:string
+        sessionId:string
+    }
+
     function parseQuery(queryString):{} {
         var query = {};
         var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
@@ -31,4 +38,5 @@ export module Entity {
         }
         return query;
     }
+    
 }
