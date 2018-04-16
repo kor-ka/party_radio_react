@@ -78,7 +78,7 @@ export module Componenets {
     // CURRENT TRACK
     //
    
-    export class CurrentTrack extends React.Component<{}, {content: Entity.Content; progress:number}>{
+    export class CurrentTrack extends React.Component<{}, {content: Entity.Content}>{
 
         render(){
 
@@ -93,7 +93,7 @@ export module Componenets {
 
             var lineStyle = {
                 height: "2px",
-                width: this.state.progress + "%", 
+                width: "50%", 
                 backgroundColor: "#000000",
                 position: "absolute" as "absolute",
                 top:"50%",
@@ -124,11 +124,13 @@ export module Componenets {
 
         render(){
 
-            let title = this.state?this.state.title:"connecting"
+            let title = this.state && this.state.title?this.state.title:"connecting"
 
-            let author = this.state? (":" + this.state.currentAuthor):""
+            let author = this.state && this.state.currentAuthor? (":" + this.state.currentAuthor):""
 
-            let session = this.state?this.state.sessionId:""
+            let session = this.state && this.state.sessionId ?this.state.sessionId:""
+
+            let avatar = this.state? this.state.avatar : null
 
             var containerStyle = {
                 display: "flex",
@@ -139,7 +141,8 @@ export module Componenets {
             var imageStyle = {
                 borderRadius:"50%",
                 margin:"20px",
-                height: "48px"
+                height: "48px",
+                width: avatar?"48px":"0px",
             }
 
             var sessionStyle = {
@@ -147,7 +150,7 @@ export module Componenets {
                 marginRight: "20px",
             }
             return(<div style={containerStyle}>
-                <img style={imageStyle} src="https://pbs.twimg.com/profile_images/831993825635745796/HnVmB0-k.jpg"/>
+                <img style={imageStyle} src={avatar}/>
                  <h2>{title}</h2>
                  <h2>{author}</h2>
                  <h3 style={sessionStyle}>{session}</h3>
