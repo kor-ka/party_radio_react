@@ -7,26 +7,20 @@ export module Entity {
         title:string
 
         constructor(originalId:number,
-            src:string){
+            src:string, title: string){
                 this.originalId = originalId;
                 this.src = src;
+                this.title = title;
             }
     }
 
     export class AudioContent extends Content{}
 
     export class YoutubeContent extends Content{
-        constructor(originalId: number, src:string){
-            super(originalId, src)
+        constructor(originalId: number, src:string, title:string){
+            super(originalId, src, title)
             this.src = "http://www.youtube.com/v/" + parseQuery(src)["v"] + "?version=3";
         }
-    }
-
-    export class HeaderData{
-        avatar:string
-        title:string
-        currentAuthor:string
-        sessionId:string
     }
 
     function parseQuery(queryString):{} {
