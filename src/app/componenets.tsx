@@ -24,6 +24,33 @@ export module Componenets {
           }
     }
 
+    export class ContentPrivateEntry extends React.Component<{key:number; content:Entity.Content}, {}>{
+        render(){
+            var containerStyle = {
+                display: "flex" as "flex",
+                justifyContent:"center" as "center",
+                margin: "20px",
+                flexDirection:"column" as "column",
+                textAlign: "center",
+            }
+
+            var subStyle = {
+                display: "inlineBlock" as "inlineBlock",
+                width:"100%",
+                textAlign: "left",
+            }
+
+            let subtitle = this.props.content.sender?(  <div style={subStyle}>
+                <h3>{this.props.content.sender}</h3>
+            </div>):(<div/>)
+
+            return (
+            <div style={containerStyle}>
+                <h2>{this.props.content.title}</h2>
+                {subtitle}
+            </div>)
+        }
+    }
     
     export class TrackQueue extends React.Component<{}, {contentQueue:Entity.Content[]}>{
         render(){
@@ -31,11 +58,17 @@ export module Componenets {
 
             if(this.state && this.state.contentQueue){
                 for(let e of this.state.contentQueue){
-                    entries.push(<ContentPublicEntry key={e.originalId} content={e} />);
+                    entries.push(<ContentPrivateEntry key={e.originalId} content={e} />);
                 }
             }
         
-            return(<div>
+            let style = {
+                display: "flex" as "flex",
+                justifyContent:"center" as "center",
+                flexDirection:"column" as "column",
+            }
+        
+            return(<div style={style}>
             {entries}
             </div>);
         }
@@ -133,14 +166,22 @@ export module Componenets {
 
         render(){
             var containerStyle = {
-                flex:1,
+                display: "flex",
                 flexDirection:"column" as "column",
                 justifyContent:"flex-start" as "flex-start",
-                alignItems:"stretch" as "stretch"
+                alignItems:"center" as "center"
+            }
+
+            var fillSrtyle = {
+                alignSelf: "stretch" as "stretch"
             }
             return(<div style={containerStyle}>
-                    <Header  ref={(h) => { this.header = h; }}/>
+                    <div style={fillSrtyle}>
+                        <Header ref={(h) => { this.header = h; }} />
+                    </div>
+                    <div style={fillSrtyle}>
                     <CurrentTrack ref={(ct) => { this.currentTrack = ct; }}/>
+                    </div>
                     <TrackQueue ref={(tq) => { this.trackQueue = tq; }}/>
                 </div>);
         }

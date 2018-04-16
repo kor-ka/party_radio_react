@@ -17,7 +17,7 @@ setInterval(function(){
   
   if(count < 250){
     dataset = dataset.concat()
-    dataset.push(new Entity.Content(count++, "", ""))
+    dataset.push(new Entity.Content(count++, "track_"+count, "track_"+count, "kor_ka"))
     
     page.trackQueue.setState({contentQueue: dataset})
   }

@@ -5,20 +5,22 @@ export module Entity {
         originalId:number
         src:string
         title:string
+        sender:string
 
         constructor(originalId:number,
-            src:string, title: string){
+            src:string, title: string, sender?:string){
                 this.originalId = originalId;
                 this.src = src;
                 this.title = title;
+                this.sender = sender
             }
     }
 
     export class AudioContent extends Content{}
 
     export class YoutubeContent extends Content{
-        constructor(originalId: number, src:string, title:string){
-            super(originalId, src, title)
+        constructor(originalId: number, src:string, title:string, sender?:string){
+            super(originalId, src, title, sender)
             this.src = "http://www.youtube.com/v/" + parseQuery(src)["v"] + "?version=3";
         }
     }
