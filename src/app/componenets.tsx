@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {Entity}  from './entity';
+import YouTube from 'react-youtube';
 export module Componenets {
 
     //
@@ -77,12 +78,51 @@ export module Componenets {
     // CURRENT TRACK
     //
    
-    export class CurrentTrack extends React.Component<{contentStopCallback:ContentStopCallback}, {content?: Entity.Content, error?:any}>{
+    export class CurrentTrack extends React.Component<{contentStopCallback:ContentStopCallback}, {content: Entity.Content}>{
+        render(){
+            if(this.state){
+                if(this.state.content instanceof Entity.AudioContent){
+                    return(<CurrentTrackAudio contentStopCallback={this.props.contentStopCallback} content={this.state.content}/>)
+                } else if(this.state.content instanceof Entity.YoutubeContent){
+
+                    let style = {
+                        position:"fixed" as "fixed",
+                        height: '100%',
+                        width: '100%',
+                    }
+
+                    const opts = {
+                        height: '100%',
+                        width: '100%',
+                        playerVars: { 
+                          autoplay: 1 as 1
+                        }
+                      };
+
+
+                    return(<div style={style}>
+                            <YouTube 
+                            opts={opts}
+                            videoId={this.state.content.src}
+                            onError={()=>this.props.contentStopCallback(this.state.content.originalId)}
+                            onEnd={()=>this.props.contentStopCallback(this.state.content.originalId)}/>
+                        </div>)
+                } 
+
+                this.props.contentStopCallback(this.state.content.originalId)
+
+            }
+
+            // skip unknown
+            return(<div/>)
+        }
+    }
+
+    export class CurrentTrackAudio extends React.Component<{contentStopCallback:ContentStopCallback, content:Entity.Content}, {error:any}>{
         progress:CurrentTrackProgress
         audio:HTMLAudioElement
         container:HTMLElement
 
-         // audio setup
          isPlaying = false;
          isWaiting = false;
          pauseFromUser = false;
@@ -109,21 +149,24 @@ export module Componenets {
                 marginTop: "20px"
             }
 
-            let title = this.state && this.state.content ? this.state.content.title : ""
-            let src  = this.state && this.state.content ? this.state.content.src : ""
+            let title = this.props.content ? this.props.content.title : ""
+            let src  =  this.props.content ? this.props.content.src : ""
 
-            let titleOrPlay = <div/>
-            if(this.state && this.state.content){
-                titleOrPlay = <h1 style={textStyle}>{title} </h1>
-            }else if(this.state && this.state.error){
-                titleOrPlay = <div className="play-button" onClick={this.containerClick}/>
+            let titleOrPlay = <h1 style={textStyle}>{title} </h1>
+            
+            if(this.state && this.state.error){
+                titleOrPlay = <div className="play-button" onClick={() => this.playClick()}/>            
             }
-        
+            
             return(<div style={containerStyle} ref={node => this.container = node} onClick={() => this.containerClick()}>
                 {titleOrPlay}
                 <audio src={src} ref={node => this.audio = node}/>
                 <CurrentTrackProgress ref={node => this.progress = node}/>
             </div>);
+        }
+
+        playClick(){
+            this.setState({error:null})
         }
 
         containerClick(){
@@ -135,8 +178,8 @@ export module Componenets {
             }
         }
 
-        componentDidUpdate(){
-            if(this.audio && this.state && this.state.content && !this.state.error){
+        componentDidMount(){
+            if(this.audio && this.props.content && (this.state == null || this.state.error == null)){
                 let playPromise = this.audio.play()
 
                 playPromise.then(()=>{}, (err)=>{
@@ -151,8 +194,8 @@ export module Componenets {
         
                 this.audio.onpause = () => {
                     this.isPlaying = false;
-                    if(this.state && this.state.content && !this.pauseFromUser){
-                        this.props.contentStopCallback(this.state.content.originalId)
+                    if(this.props.content && !this.pauseFromUser){
+                        this.props.contentStopCallback(this.props.content.originalId)
                     }
                 };
 

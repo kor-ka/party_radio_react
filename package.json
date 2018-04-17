@@ -13,6 +13,7 @@
   "dependencies": {
     "@types/react": "16.0.40",
     "@types/react-dom": "16.0.4",
+    "@types/react-youtube": "^7.4.1",
     "immutable": "^3.8.2",
     "mqtt": "2.17.0",
     "react": "16.2.0",

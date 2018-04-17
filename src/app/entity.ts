@@ -36,7 +36,7 @@ export module Entity {
     export class YoutubeContent extends Content{
         constructor(from:IContent | any){
             super(from)
-            this.src = "http://www.youtube.com/v/" + parseQuery(from.url)["v"] + "?version=3";
+            this.src = getParameterByName("v", from.url);
         }
     }
 
@@ -65,14 +65,14 @@ export module Entity {
         }
     }
 
-    function parseQuery(queryString):{} {
-        var query = {};
-        var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-        for (var i = 0; i < pairs.length; i++) {
-            var pair = pairs[i].split('=');
-            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-        }
-        return query;
+    function getParameterByName(name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
     
 }

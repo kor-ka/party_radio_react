@@ -121,12 +121,14 @@ export module Model{
             })
         }
 
+        
         playNext(stopped?:number){
             if(stopped && this.current && stopped !== this.current.originalId){
                 return
             }
 
             this.current = this.fresh.length != 0? this.fresh.shift() : this.boring.shift()
+
             if(this.current!=null){
                 this.header.status = null
                 this.headerChangeCallback(this.header.clone())
