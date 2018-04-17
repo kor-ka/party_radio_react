@@ -35,6 +35,19 @@ h1 {
     font-family: "Roboto"
   }
 
+  /* player */
+  .play-button {
+    margin: 0 auto;
+    top: 25%;
+    position: relative;  
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 2.5em 0 2.5em 5em;
+    border-color: transparent transparent transparent #000;
+    opacity: .75; 
+  }
+
 
 
 

@@ -77,7 +77,7 @@ export module Componenets {
     // CURRENT TRACK
     //
    
-    export class CurrentTrack extends React.Component<{}, {content: Entity.Content}>{
+    export class CurrentTrack extends React.Component<{contentStopCallback:ContentStopCallback}, {content?: Entity.Content, error?:any}>{
         progress:CurrentTrackProgress
         audio:HTMLAudioElement
         container:HTMLElement
@@ -112,10 +112,15 @@ export module Componenets {
             let title = this.state && this.state.content ? this.state.content.title : ""
             let src  = this.state && this.state.content ? this.state.content.src : ""
 
-           
+            let titleOrPlay = <div/>
+            if(this.state && this.state.content){
+                titleOrPlay = <h1 style={textStyle}>{title} </h1>
+            }else if(this.state && this.state.error){
+                titleOrPlay = <div className="play-button" onClick={this.containerClick}/>
+            }
         
             return(<div style={containerStyle} ref={node => this.container = node} onClick={() => this.containerClick()}>
-                <h1 style={textStyle}>{title} </h1>
+                {titleOrPlay}
                 <audio src={src} ref={node => this.audio = node}/>
                 <CurrentTrackProgress ref={node => this.progress = node}/>
             </div>);
@@ -131,11 +136,11 @@ export module Componenets {
         }
 
         componentDidUpdate(){
-            if(this.audio){
+            if(this.audio && this.state && this.state.content && !this.state.error){
                 let playPromise = this.audio.play()
 
                 playPromise.then(()=>{}, (err)=>{
-                    //TODO - handle, show play button
+                   this.setState({error:err})
                 });
         
                 this.audio.onplaying = () => {
@@ -146,10 +151,9 @@ export module Componenets {
         
                 this.audio.onpause = () => {
                     this.isPlaying = false;
-                    // handle stop
-                    //   if(!pauseFromUser && !isWaiting &&  (typeof onStop != 'undefined')){
-                    //     onStop.@ru.korinc.client.player.PlayerController.EventListener::onEvent()();
-                    //   }
+                    if(this.state && this.state.content && !this.pauseFromUser){
+                        this.props.contentStopCallback(this.state.content.originalId)
+                    }
                 };
 
         
@@ -233,7 +237,8 @@ export module Componenets {
     // PAGE
     //
 
-    export class Page extends React.Component<{}, {}>{
+    export interface ContentStopCallback{ (id:number):void}
+    export class Page extends React.Component<{contentStopCallback:ContentStopCallback}, {}>{
         header: Header
         currentTrack: CurrentTrack    
         trackQueue: TrackQueue
@@ -254,7 +259,7 @@ export module Componenets {
                         <Header ref={(h) => { this.header = h; }} />
                     </div>
                     <div style={fillSrtyle}>
-                    <CurrentTrack ref={(ct) => { this.currentTrack = ct; }}/>
+                    <CurrentTrack ref={(ct) => { this.currentTrack = ct; }} contentStopCallback={this.props.contentStopCallback}/>
                     </div>
                     <TrackQueue ref={(tq) => { this.trackQueue = tq; }}/>
                 </div>);

@@ -6,8 +6,14 @@ import {Model} from './model'
 
 let dataset:Entity.Content[] = []
 
+let model:Model.Model
+
 let page = ReactDOM.render(
-  <Componenets. Page/>,
+  <Componenets.Page contentStopCallback={id=>{
+    if(model){
+      model.playNext(id)
+    }
+  }}/>,
   document.getElementById("root")
 ) as Componenets.Page
 
@@ -31,7 +37,7 @@ let page = ReactDOM.render(
 //     sessionId:"string"})
 // },1000);
 
-new Model.Model("c-1001244859246", null, 
+model = new Model.Model("c-1001244859246", null, 
 (queue => {
   
   page.trackQueue.setState({contentQueue: queue})

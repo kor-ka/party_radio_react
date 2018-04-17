@@ -63,7 +63,7 @@ export module Model{
             this.client.on('message', (topic, message) => {
             
               var msg = JSON.parse(message.toString());
-              console.log(msg)
+              console.log("mqtt in", msg)
               if(msg.update != null){
                 switch(msg.update){
                     case "init":
@@ -84,21 +84,30 @@ export module Model{
                         if(!c.boring){
                             this.lasetPlayed.push(c.originalId)
                             this.fresh.push(c)
+
+                            if(this.current == null){
+                                this.playNext()
+                            }else{
+                                this.updateQueue()
+                            }
                         }
-                        if(this.current == null){
-                            this.playNext()
-                        }
+                        
                     break;
 
                     case "boring_list":
                         let list:any[] = msg.data.boring_list
                         list.forEach(element => {
                             let c = Entity.Content.from(element)
-                            this.lasetPlayed.push(c.originalId)
-                            this.boring.push(c)
+                            if(this.lasetPlayed.indexOf(c.originalId) < 0){
+                                this.lasetPlayed.push(c.originalId)
+                                this.boring.push(c)
+                            }
+                            
                         });
                         if(this.current == null){
                             this.playNext()
+                        }else{
+                            this.updateQueue()
                         }
                     break;
 
@@ -112,13 +121,25 @@ export module Model{
             })
         }
 
-        playNext(){
-            this.current = this.fresh.length != 0? this.fresh.pop() : this.boring.pop()
+        playNext(stopped?:number){
+            if(stopped && this.current && stopped !== this.current.originalId){
+                return
+            }
+
+            this.current = this.fresh.length != 0? this.fresh.shift() : this.boring.shift()
             if(this.current!=null){
                 this.header.status = null
                 this.headerChangeCallback(this.header.clone())
             }
             this.currentChangeCallback(this.current)
+            this.updateQueue()
+
+            if(this.fresh.length + this.boring.length < 3){
+                this.onBoring()
+            }
+        }
+
+        updateQueue(){
             this.queueChangeCallback(this.fresh.concat(this.boring))
         }
 
@@ -133,6 +154,9 @@ export module Model{
                 data: data,
                 additional_id: this.clientId
             }
+
+            console.log("mqtt out", JSON.stringify(msg))
+
             this.client.publish("device_out", Buffer.from(JSON.stringify(msg)))
         }
     }
