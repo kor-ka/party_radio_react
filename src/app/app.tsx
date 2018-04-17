@@ -16,15 +16,9 @@ let page = ReactDOM.render(
 // let content = new Entity.Content(count, "", "Awesome track")
 // setInterval(function(){
   
-<<<<<<< HEAD
-  if(count < 250){
-    dataset = dataset.concat()
-    dataset.push(new Entity.Content(count++, "track_"+count, "track_"+count, "kor_ka"))
-=======
-//   if(count < 250){
-//     dataset = dataset.concat()
-//     dataset.push(new Entity.Content(count++, "", ""))
->>>>>>> wip(model): add model, mqtt
+// if(count < 250){
+//   dataset = dataset.concat()
+//   dataset.push(new Entity.Content(count++, "track_"+count, "track_"+count, "kor_ka"))
     
 //     page.trackQueue.setState({contentQueue: dataset})
 //   }
