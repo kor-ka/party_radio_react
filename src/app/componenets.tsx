@@ -19,7 +19,6 @@ export module Componenets {
           }
         
           render() {
-            
             return <div ref={el => (this.instance = el)} className={"contentContainer"}/>;
           }
     }
@@ -79,12 +78,18 @@ export module Componenets {
     //
    
     export class CurrentTrack extends React.Component<{}, {content: Entity.Content}>{
+        progress:CurrentTrackProgress
+        audio:HTMLAudioElement
+        container:HTMLElement
+
+         // audio setup
+         isPlaying = false;
+         isWaiting = false;
+         pauseFromUser = false;
 
         render(){
 
-            if (!this.state){
-                return (<div/>)
-            }
+           
            
             var containerStyle = {
                 position:"relative" as "relative",
@@ -103,28 +108,94 @@ export module Componenets {
             var textStyle = {
                 marginTop: "20px"
             }
-            
+
+            let title = this.state && this.state.content ? this.state.content.title : ""
+            let src  = this.state && this.state.content ? this.state.content.src : ""
+
+           
         
-            return(<div style={containerStyle}>
-                <h1 style={textStyle}>{this.state.content.title} </h1>
-                <div style={lineStyle}/>
+            return(<div style={containerStyle} ref={node => this.container = node} onClick={() => this.containerClick()}>
+                <h1 style={textStyle}>{title} </h1>
+                <audio src={src} ref={node => this.audio = node}/>
+                <CurrentTrackProgress ref={node => this.progress = node}/>
             </div>);
         }
+
+        containerClick(){
+            if (this.isPlaying) {
+                this.pauseFromUser = true;
+                this.audio.pause()
+            } else {
+                this.audio.play();
+            }
+        }
+
+        componentDidUpdate(){
+            if(this.audio){
+                let playPromise = this.audio.play()
+
+                playPromise.then(()=>{}, (err)=>{
+                    //TODO - handle, show play button
+                });
+        
+                this.audio.onplaying = () => {
+                    this.pauseFromUser = false;
+                    this.isPlaying = true;
+                    this.isWaiting = false;
+                };
+        
+                this.audio.onpause = () => {
+                    this.isPlaying = false;
+                    // handle stop
+                    //   if(!pauseFromUser && !isWaiting &&  (typeof onStop != 'undefined')){
+                    //     onStop.@ru.korinc.client.player.PlayerController.EventListener::onEvent()();
+                    //   }
+                };
+
+        
+                this.audio.ontimeupdate = () => {
+                    
+                    if(this.progress){
+                        this.progress.setState({progress: (
+                            this.audio.duration>0
+                                ?this.audio.currentTime/this.audio.duration * 100
+                                :0
+                        )})
+                    }
+
+                };
+
+           }
+        }
     }
+
+    export class CurrentTrackProgress extends React.Component<{}, {progress:number}>{
+        render(){
+            if(!this.state){
+                return <div/>
+            }
+            var lineStyle = {
+                height: "2px",
+                width: this.state.progress + "%", 
+                backgroundColor: "#000000",
+                position: "absolute" as "absolute",
+                top:"50%",
+                left:0,
+            }
+        
+            return( <div style={lineStyle}/>);
+        }
+    }
+
 
     //
     // HEADER
     //
-    export class Header extends React.Component<{}, {
-        avatar:string
-        title:string
-        currentAuthor:string
-        sessionId:string
-    }>{
+    export class Header extends React.Component<{}, Entity.HeaderData>{
 
         render(){
 
-            let title = this.state && this.state.title?this.state.title:"connecting"
+            let title = this.state ? ( this.state.status? this.state.status : this.state.title?this.state.title : "") :"connecting..."
 
             let author = this.state && this.state.currentAuthor? (":" + this.state.currentAuthor):""
 

@@ -1,19 +1,29 @@
 import { Entity } from "./entity";
 
-import {connect} from "mqtt"
-
-import {Map} from "immutable"
+import {connect, Client, MqttClient} from "mqtt"
 
 export module Model{
+    export interface CurrentChangeCallback { (queue: Entity.Content): void }
     export interface QueueChangeCallback { (queue: Entity.Content[]): void }
-    export interface HeaderChangeCallback { (header: Map<string, string>): void }
+    export interface HeaderChangeCallback { (header: Entity.HeaderData): void }
 
 
     export class Model{
         token:string
-        header = Map({empty:""})
+        header = new Entity.HeaderData(null, null, null, null, "connecting...")
         queueChangeCallback:QueueChangeCallback
         headerChangeCallback:HeaderChangeCallback
+        currentChangeCallback:CurrentChangeCallback
+
+        lasetPlayed:number[] = []
+
+        current:Entity.Content = null
+        fresh:Entity.Content[]  = []
+        boring:Entity.Content[]  = []
+
+        client:MqttClient
+
+        clientId:string
         
         guid() {
             function s4() {
@@ -25,50 +35,71 @@ export module Model{
               s4() + '-' + s4() + s4() + s4();
           }
     
-        constructor(token:string, startWith:string, onQueueUpdate:QueueChangeCallback, onHeaderUpdate:HeaderChangeCallback){
+        constructor(token:string, startWith:string, onQueueUpdate:QueueChangeCallback, onHeaderUpdate:HeaderChangeCallback, onCurrentUpdate:CurrentChangeCallback){
             this.token = token
-            let clientId = this.guid()
+            this.clientId = this.guid()
             this.queueChangeCallback = onQueueUpdate;
             this.headerChangeCallback = onHeaderUpdate
-            var client  = connect('wss://uproar.ddns.net:56001', {clientId:"web_" + clientId, username:"web", password:"web"})
-            client.on('connect',  () => {
+            this.currentChangeCallback = onCurrentUpdate
+            this.client  = connect('wss://uproar.ddns.net:56001', {clientId:"web_" + this.clientId, username:"web", password:"web"})
+            this.client.on('connect',  () => {
             
-                client.subscribe("device_in_" + token);
-                client.subscribe("device_in_" + token + "_" + clientId);
+                this.client.subscribe("device_in_" + token);
+                this.client.subscribe("device_in_" + token + "_" + this.clientId);
 
-                this.header = this.header.set("sessionId", clientId.substr(clientId.length -5))
-                console.log(this)
-                this.headerChangeCallback(this.header)
+                this.header.sessionId = this.clientId.substr(this.clientId.length -5)
+                this.headerChangeCallback(this.header.clone())
     
                 let data = {
                     token:token,
-                    additional_id: clientId,
+                    additional_id: this.clientId,
                     startWith: startWith
                 }
                 
-                client.publish("registry", Buffer.from(JSON.stringify(data)));
+                this.client.publish("registry", Buffer.from(JSON.stringify(data)));
             })
     
             
-            client.on('message', (topic, message) => {
-              // message is Buffer
-              console.log(message.toString())
+            this.client.on('message', (topic, message) => {
+            
               var msg = JSON.parse(message.toString());
-
+              console.log(msg)
               if(msg.update != null){
                 switch(msg.update){
                     case "init":
-                        let title = msg.title
-                        let photo = msg.photo
-                        let src:string = photo?photo.src:null
-                        let username = msg.username
-                        this.onInit(title, src, username)
+                        let title = msg.data.context.title
+                        let photo = msg.data.context.photo
+                        let username = msg.data.context.username
+                        
+                        this.header.avatar = photo
+                        this.header.title = title
+                        this.header.status = "fetching gratest for you..."
+                        this.headerChangeCallback(this.header.clone())
+                        this.onBoring()
                     break;
                     
                     case "add_content":
+                        let c = Entity.Content.from(msg.data)
+                        // boring sent via add_content for backward devices capability
+                        if(!c.boring){
+                            this.lasetPlayed.push(c.originalId)
+                            this.fresh.push(c)
+                        }
+                        if(this.current == null){
+                            this.playNext()
+                        }
                     break;
 
                     case "boring_list":
+                        let list:any[] = msg.data.boring_list
+                        list.forEach(element => {
+                            let c = Entity.Content.from(element)
+                            this.lasetPlayed.push(c.originalId)
+                            this.boring.push(c)
+                        });
+                        if(this.current == null){
+                            this.playNext()
+                        }
                     break;
 
                     case "promote":
@@ -81,13 +112,28 @@ export module Model{
             })
         }
 
-       onInit(title:string, photo:string, username:string){
-            this.header = this.header
-                .set("title", title)
-                .set("currentAuthor", username)
-                .set("avatar", photo)
-            this.headerChangeCallback(this.header)
-       }
-        
+        playNext(){
+            this.current = this.fresh.length != 0? this.fresh.pop() : this.boring.pop()
+            if(this.current!=null){
+                this.header.status = null
+                this.headerChangeCallback(this.header.clone())
+            }
+            this.currentChangeCallback(this.current)
+            this.queueChangeCallback(this.fresh.concat(this.boring))
+        }
+
+        onBoring(){
+            this.publish("boring", { exclude: this.lasetPlayed })
+        }
+
+        publish(message:string, data:any){
+            let msg = {
+                update: message,
+                token: this.token,
+                data: data,
+                additional_id: this.clientId
+            }
+            this.client.publish("device_out", Buffer.from(JSON.stringify(msg)))
+        }
     }
 }

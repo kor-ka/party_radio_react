@@ -33,18 +33,15 @@ let page = ReactDOM.render(
 
 new Model.Model("c-1001244859246", null, 
 (queue => {
-  let res = queue.slice()
-  res.shift()
-  page.trackQueue.setState({contentQueue: res})
-  if(queue.length > 0){
-    page.currentTrack.setState({content:queue[0]})
-  }
+  
+  page.trackQueue.setState({contentQueue: queue})
+  
 }), 
 (header => {
-  page.header.setState({ 
-        avatar:header.get("avatar", ""),
-        title:header.get("title", ""),
-        currentAuthor:header.get("currentAuthor", ""),
-        sessionId:header.get("sessionId", "")})
+  page.header.setState(header)
+  console.log(header)
+}), (current => {
+  page.currentTrack.setState({content:current})
+
 }))
 

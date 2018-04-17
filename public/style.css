@@ -20,14 +20,14 @@ h1 {
   h2 {
     margin: 0;
     font-size: 30px;
-    font-weight:  300;
+    font-weight:  100;
     color: #000000;
     text-align: center;
     font-family: "Roboto"
   }
 
   h3 {
-    font-size: 30px;
+    font-size: 20px;
     font-weight:  100;
     margin: 0;
     color: #000000;
