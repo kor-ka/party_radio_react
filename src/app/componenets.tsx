@@ -1,75 +1,60 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {Entity}  from './entity';
+import { Entity } from './entity';
 import YouTube from 'react-youtube';
+import { Model } from './model'
 export module Componenets {
 
     //
     // TRACK QUEUE
     //
-   
-    export class ContentPublicEntry extends React.Component<{key:number; content:Entity.Content}, {}>{
-        instance
-        componentDidMount() {
+
+    export class ContentPublicEntry extends React.Component<{ key: number; content: Entity.Content }, {}>{
+        onCreate = (instance: HTMLElement) => {
             const s = document.createElement('script');
             s.type = 'text/javascript';
             s.async = true;
             s.src = 'https://telegram.org/js/telegram-widget.js?4';
-            s.setAttribute("data-telegram-post", "radio_persimmon/" +  this.props.content.originalId)
-            this.instance.appendChild(s);
-          }
-        
-          render() {
-            return <div ref={el => (this.instance = el)} className={"contentContainer"}/>;
-          }
-    }
+            s.setAttribute("data-telegram-post", "radio_persimmon/" + this.props.content.originalId)
+            instance.appendChild(s);
+        }
 
-    export class ContentPrivateEntry extends React.Component<{key:number; content:Entity.Content}, {}>{
-        render(){
-            var containerStyle = {
-                display: "flex" as "flex",
-                justifyContent:"center" as "center",
-                margin: "20px",
-                flexDirection:"column" as "column",
-                textAlign: "center",
-            }
-
-            var subStyle = {
-                display: "inlineBlock" as "inlineBlock",
-                width:"100%",
-                textAlign: "left",
-            }
-
-            let subtitle = this.props.content.sender?(  <div style={subStyle}>
-                <h3>{this.props.content.sender}</h3>
-            </div>):(<div/>)
-
-            return (
-            <div style={containerStyle}>
-                <h2>{this.props.content.title}</h2>
-                {subtitle}
-            </div>)
+        render() {
+            return <div ref={el => {
+                if (el != null) {
+                    this.onCreate(el)
+                }
+            }} className={"contentContainer"} />;
         }
     }
-    
-    export class TrackQueue extends React.Component<{}, {contentQueue:Entity.Content[]}>{
-        render(){
+
+    export class ContentPrivateEntry extends React.Component<{ key: number; content: Entity.Content }, {}>{
+        render() {
+
+            let subtitle = this.props.content.sender ? (<div className="contentPrivateEntrySender">
+                <h3>{this.props.content.sender}</h3>
+            </div>) : (<div />)
+
+            return (
+                <div className="contentPrivateEntryContainer">
+                    <h2>{this.props.content.title}</h2>
+                    {subtitle}
+                </div>)
+        }
+    }
+
+    export class TrackQueue extends React.Component<{ contentQueue: Entity.Content[] }, {}>{
+        render() {
             let entries = []
 
-            if(this.state && this.state.contentQueue){
-                for(let e of this.state.contentQueue){
+            if (this.state && this.props.contentQueue) {
+                for (let e of this.props.contentQueue) {
                     entries.push(<ContentPrivateEntry key={e.originalId} content={e} />);
                 }
             }
-        
-            let style = {
-                display: "flex" as "flex",
-                justifyContent:"center" as "center",
-                flexDirection:"column" as "column",
-            }
-        
-            return(<div style={style}>
-            {entries}
+
+            return (<div className="queue">
+                {entries}
             </div>);
         }
     }
@@ -77,160 +62,129 @@ export module Componenets {
     //
     // CURRENT TRACK
     //
-   
-    export class CurrentTrack extends React.Component<{contentStopCallback:ContentStopCallback}, {content: Entity.Content}>{
-        render(){
-            if(this.state){
-                if(this.state.content instanceof Entity.AudioContent){
-                    return(<CurrentTrackAudio contentStopCallback={this.props.contentStopCallback} content={this.state.content}/>)
-                } else if(this.state.content instanceof Entity.YoutubeContent){
 
-                    let style = {
-                        position:"fixed" as "fixed",
-                        height: '100%',
-                        width: '100%',
+    export class CurrentTrack extends React.Component<{ contentStopCallback: ContentStopCallback, content: Entity.Content }, {}>{
+        render() {
+            if (this.props.content instanceof Entity.AudioContent) {
+                return (<CurrentTrackAudio contentStopCallback={this.props.contentStopCallback} content={this.props.content} />)
+            } else if (this.props.content instanceof Entity.YoutubeContent) {
+
+                const opts = {
+                    height: '100%',
+                    width: '100%',
+                    playerVars: {
+                        autoplay: 1 as 1
                     }
+                };
 
-                    const opts = {
-                        height: '100%',
-                        width: '100%',
-                        playerVars: { 
-                          autoplay: 1 as 1
-                        }
-                      };
-
-
-                    return(<div style={style}>
-                            <YouTube 
-                            opts={opts}
-                            videoId={this.state.content.src}
-                            onError={()=>this.props.contentStopCallback(this.state.content.originalId)}
-                            onEnd={()=>this.props.contentStopCallback(this.state.content.originalId)}/>
-                        </div>)
-                } 
-
-                this.props.contentStopCallback(this.state.content.originalId)
-
+                return (<div className="contentPrivateEntryYoutube">
+                    <YouTube
+                        opts={opts}
+                        videoId={this.props.content.src}
+                        onError={() => this.props.contentStopCallback(this.props.content.originalId)}
+                        onEnd={() => this.props.contentStopCallback(this.props.content.originalId)} />
+                </div>)
             }
-
             // skip unknown
-            return(<div/>)
+            this.props.contentStopCallback(this.props.content.originalId)
+            return (<div />)
+
         }
+
+
     }
 
-    export class CurrentTrackAudio extends React.Component<{contentStopCallback:ContentStopCallback, content:Entity.Content}, {error:any}>{
-        progress:CurrentTrackProgress
-        audio:HTMLAudioElement
-        container:HTMLElement
+    export class CurrentTrackAudio extends React.Component<{ contentStopCallback: ContentStopCallback, content: Entity.Content }, { error?: any, progress?: any }>{
+        audio: HTMLAudioElement
 
-         isPlaying = false;
-         isWaiting = false;
-         pauseFromUser = false;
+        isPlaying = false;
+        isWaiting = false;
+        pauseFromUser = false;
 
-        render(){
+        render() {
 
-           
-           
-            var containerStyle = {
-                position:"relative" as "relative",
-                textAlign: "center",
+
+
+
+            let title = this.props.content ? this.props.content.title : ""
+            let src = this.props.content ? this.props.content.src : ""
+
+            let titleOrPlay = <h1 className="contentPrivateEntryAudioContainer">{title} </h1>
+
+            if (this.state && this.state.error != null) {
+                titleOrPlay = <div className="play-button" onClick={this.playClick} />
             }
+
 
             var lineStyle = {
                 height: "2px",
-                width: "50%", 
+                width: (this.state.progress != null ? this.state.progress : 0) + "%",
                 backgroundColor: "#000000",
                 position: "absolute" as "absolute",
-                top:"50%",
-                left:0,
+                top: "50%",
+                left: 0,
             }
 
-            var textStyle = {
-                marginTop: "20px"
-            }
-
-            let title = this.props.content ? this.props.content.title : ""
-            let src  =  this.props.content ? this.props.content.src : ""
-
-            let titleOrPlay = <h1 style={textStyle}>{title} </h1>
-            
-            if(this.state && this.state.error){
-                titleOrPlay = <div className="play-button" onClick={() => this.playClick()}/>            
-            }
-            
-            return(<div style={containerStyle} ref={node => this.container = node} onClick={() => this.containerClick()}>
+            return (<div className="contentPrivateEntryAudioContainer" onClick={this.containerClick}>
                 {titleOrPlay}
-                <audio src={src} ref={node => this.audio = node}/>
-                <CurrentTrackProgress ref={node => this.progress = node}/>
+                <audio src={src} ref={this.audioDidMount} />
+                <div style={lineStyle} /> />
             </div>);
         }
 
-        playClick(){
-            this.setState({error:null})
+        playClick = () => {
+            this.setState({ error: null })
         }
 
-        containerClick(){
-            if (this.isPlaying) {
-                this.pauseFromUser = true;
-                this.audio.pause()
-            } else {
-                this.audio.play();
+        containerClick = () => {
+            if (this.audio != null) {
+                if (this.isPlaying) {
+                    this.pauseFromUser = true;
+                    this.audio.pause()
+                } else {
+                    this.audio.play();
+                }
             }
         }
 
-        componentDidMount(){
-            if(this.audio && this.props.content && (this.state == null || this.state.error == null)){
-                let playPromise = this.audio.play()
+        audioDidMount = (audio: HTMLAudioElement) => {
+            if (audio == null) {
+                return;
+            }
+            this.audio = audio
+            if (audio && this.props.content && (this.state == null || this.state.error == null)) {
+                let playPromise = audio.play()
 
-                playPromise.then(()=>{}, (err)=>{
-                   this.setState({error:err})
+                playPromise.then(() => { }, (err) => {
+                    this.setState({ error: err })
                 });
-        
-                this.audio.onplaying = () => {
+
+                audio.onplaying = () => {
                     this.pauseFromUser = false;
                     this.isPlaying = true;
                     this.isWaiting = false;
                 };
-        
-                this.audio.onpause = () => {
+
+                audio.onpause = () => {
                     this.isPlaying = false;
-                    if(this.props.content && !this.pauseFromUser){
+                    if (this.props.content && !this.pauseFromUser) {
                         this.props.contentStopCallback(this.props.content.originalId)
                     }
                 };
 
-        
-                this.audio.ontimeupdate = () => {
-                    
-                    if(this.progress){
-                        this.progress.setState({progress: (
-                            this.audio.duration>0
-                                ?this.audio.currentTime/this.audio.duration * 100
-                                :0
-                        )})
-                    }
+
+                audio.ontimeupdate = () => {
+                    this.setState({
+                        progress: (
+                            audio.duration > 0
+                                ? audio.currentTime / audio.duration * 100
+                                : 0
+                        )
+                    })
 
                 };
 
-           }
-        }
-    }
-
-    export class CurrentTrackProgress extends React.Component<{}, {progress:number}>{
-        render(){
-            if(!this.state){
-                return <div/>
             }
-            var lineStyle = {
-                height: "2px",
-                width: this.state.progress + "%", 
-                backgroundColor: "#000000",
-                position: "absolute" as "absolute",
-                top:"50%",
-                left:0,
-            }
-        
-            return( <div style={lineStyle}/>);
         }
     }
 
@@ -238,40 +192,24 @@ export module Componenets {
     //
     // HEADER
     //
-    export class Header extends React.Component<{}, Entity.HeaderData>{
+    export class Header extends React.Component<Entity.HeaderData, {}>{
 
-        render(){
+        render() {
 
-            let title = this.state ? ( this.state.status? this.state.status : this.state.title?this.state.title : "") :"connecting..."
+            let title = this.props.status ? this.props.status : this.props.title ? this.props.title : ""
 
-            let author = this.state && this.state.currentAuthor? (":" + this.state.currentAuthor):""
+            let author = this.props.currentAuthor ? (":" + this.props.currentAuthor) : ""
 
-            let session = this.state && this.state.sessionId ?this.state.sessionId:""
+            let session =  this.props.sessionId ? this.props.sessionId : ""
 
-            let avatar = this.state? this.state.avatar : null
+            let avatar = this.props.avatar
 
-            var containerStyle = {
-                display: "flex",
-                flexDirection: "row" as "row",
-                alignItems: "center" as "center"
-            }
-
-            var imageStyle = {
-                borderRadius:"50%",
-                margin:"20px",
-                height: "48px",
-                width: avatar?"48px":"0px",
-            }
-
-            var sessionStyle = {
-                marginLeft: "auto",
-                marginRight: "20px",
-            }
-            return(<div style={containerStyle}>
-                <img style={imageStyle} src={avatar}/>
-                 <h2>{title}</h2>
-                 <h2>{author}</h2>
-                 <h3 style={sessionStyle}>{session}</h3>
+           
+            return (<div className="headerContainer">
+                <img  src={avatar}  className="headerImage" hidden={this.props.avatar.length===0}/>
+                <h2>{title}</h2>
+                <h2>{author}</h2>
+                <h3 className="headerSession">{session}</h3>
             </div>);
         }
     }
@@ -280,34 +218,50 @@ export module Componenets {
     // PAGE
     //
 
-    export interface ContentStopCallback{ (id:number):void}
-    export class Page extends React.Component<{contentStopCallback:ContentStopCallback}, {}>{
+    export interface ContentStopCallback { (id: number): void }
+    export class Page extends React.Component<{}, {header: Entity.HeaderData, current:Entity.Content, queue:Entity.Content[]}>{
         header: Header
-        currentTrack: CurrentTrack    
+        currentTrack: CurrentTrack
         trackQueue: TrackQueue
+        model:Model.Model
 
-        render(){
+        componentDidMount() {
+            let state = {header: new Entity.HeaderData("", "", "","","connecting..."), current: new Entity.Content()}
+
+            this.model = new Model.Model("c-1001244859246", undefined,
+            (queue => {
+    
+    
+            }),
+            (header => {
+                console.log(header)
+            }), (current => {
+    
+            }))
+        }
+
+        render() {
             var containerStyle = {
                 display: "flex",
-                flexDirection:"column" as "column",
-                justifyContent:"flex-start" as "flex-start",
-                alignItems:"center" as "center"
+                flexDirection: "column" as "column",
+                justifyContent: "flex-start" as "flex-start",
+                alignItems: "center" as "center"
             }
 
             var fillSrtyle = {
                 alignSelf: "stretch" as "stretch"
             }
-            return(<div style={containerStyle}>
-                    <div style={fillSrtyle}>
-                        <Header ref={(h) => { this.header = h; }} />
-                    </div>
-                    <div style={fillSrtyle}>
-                    <CurrentTrack ref={(ct) => { this.currentTrack = ct; }} contentStopCallback={this.props.contentStopCallback}/>
-                    </div>
-                    <TrackQueue ref={(tq) => { this.trackQueue = tq; }}/>
-                </div>);
+            return (<div style={containerStyle}>
+                <div style={fillSrtyle}>
+                    <Header ref={(h) => { this.header = h; }} />
+                </div>
+                <div style={fillSrtyle}>
+                    <CurrentTrack ref={(ct) => { this.currentTrack = ct; }} contentStopCallback={this.props.contentStopCallback} />
+                </div>
+                <TrackQueue ref={(tq) => { this.trackQueue = tq; }} />
+            </div>);
         }
     }
-    
+
 
 }

@@ -35,6 +35,26 @@ h1 {
     font-family: "Roboto"
   }
 
+  /* header */
+
+  .headerContainer{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+headerImage{
+  border-radius: 50%;
+  margin: 20px;
+  height: 48px;
+  width: 48px;
+}
+
+.headerSession{
+  margin-left: auto;
+  margin-right: 20px;
+}
+
   /* player */
   .play-button {
     margin: 0 auto;
@@ -48,6 +68,42 @@ h1 {
     opacity: .75; 
   }
 
+  /* content */
+  .contentPrivateEntryContainer {
+    display: flex;
+    justify-content: center;
+    margin: 20px;
+    flex-direction: column;
+    text-align: "center";
+}
 
+
+.contentPrivateEntrySender{
+  display: inlineBlock;
+  width: 100%;
+  text-align: left;
+}
+
+.contentPrivateEntryYoutube{
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
+
+.contentPrivateEntryAudioContainer{
+  margin-top: 20px;
+}
+.contentPrivateEntryAudioText{
+  position: relative;
+  text-align: center;
+}
+
+
+/* content queue */
+.queue{
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
 
 
