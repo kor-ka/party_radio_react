@@ -1,28 +1,27 @@
 import * as React from 'react';
 import YouTube from 'react-youtube';
-import {Content, AudioContent, YoutubeContent, HeaderData} from "./entity"
-import {Model} from "./model"
+import {Content, AudioContent, YoutubeContent, HeaderData} from './entity'
+import {Model} from './model'
 
     //
     // TRACK QUEUE
     //
 
     export class ContentPublicEntry extends React.Component<{ key: number; content: Content }, {}>{
-        onCreate = (instance: HTMLElement) => {
+        onCreate = (instance: HTMLDivElement) => {
+            if(instance == null){
+                return;
+            }
             const s = document.createElement('script');
             s.type = 'text/javascript';
             s.async = true;
             s.src = 'https://telegram.org/js/telegram-widget.js?4';
-            s.setAttribute("data-telegram-post", "radio_persimmon/" + this.props.content.originalId)
+            s.setAttribute('data-telegram-post', 'radio_persimmon/' + this.props.content.originalId)
             instance.appendChild(s);
         }
 
         render() {
-            return <div ref={el => {
-                if (el != null) {
-                    this.onCreate(el)
-                }
-            }} className={"contentContainer"} />;
+            return <div ref={this.onCreate} className={"contentContainer"} />;
         }
     }
 
@@ -62,6 +61,10 @@ import {Model} from "./model"
     //
 
     export class CurrentTrack extends React.Component<{ contentStopCallback: ContentStopCallback, content: Content }, {}>{
+        skipCallback = () => {
+            this.props.contentStopCallback(this.props.content.originalId)
+        }
+        
         render() {
             if (this.props.content instanceof AudioContent) {
                 return (<CurrentTrackAudio contentStopCallback={this.props.contentStopCallback} content={this.props.content} />)
@@ -79,8 +82,8 @@ import {Model} from "./model"
                     <YouTube
                         opts={opts}
                         videoId={this.props.content.src}
-                        onError={() => this.props.contentStopCallback(this.props.content.originalId)}
-                        onEnd={() => this.props.contentStopCallback(this.props.content.originalId)} />
+                        onError={this.skipCallback}
+                        onEnd={this.skipCallback} />
                 </div>)
             } else if(!this.props.content.stub){
                 // skip unknown
@@ -104,11 +107,8 @@ import {Model} from "./model"
 
         render() {
 
-
-
-
-            let title = this.props.content ? this.props.content.title : ""
-            let src = this.props.content ? this.props.content.src : ""
+            let title = this.props.content.title
+            let src = this.props.content.src
 
             let titleOrPlay = <h1 className="contentPrivateEntryAudioContainer">{title} </h1>
 
@@ -197,11 +197,11 @@ import {Model} from "./model"
 
         render() {
 
-            let title = this.props.data.status ? this.props.data.status : this.props.data.title ? this.props.data.title : ""
+            let title = this.props.data.status ? this.props.data.status : this.props.data.title
 
             let author = this.props.data.currentAuthor ? (":" + this.props.data.currentAuthor) : ""
 
-            let session =  this.props.data.sessionId ? this.props.data.sessionId : ""
+            let session =  this.props.data.sessionId
 
             let avatar = this.props.data.avatar
 
@@ -221,55 +221,32 @@ import {Model} from "./model"
     //
     // PAGE
     //
-    class PageState{
-        header: HeaderData; 
-        current:Content; 
-        queue:Content[];
-
-        constructor(header: HeaderData, current:Content, queue:Content[]){
-            this.header = header;
-            this.current = current;
-            this.queue = queue;
-        }
-
-        clone(){
-            return new PageState(this.header, this.current, this.queue)
-        }
-    }
-
     export interface ContentStopCallback { (id: number): void }
     export class Page extends React.Component<{}, {header: HeaderData, current:Content, queue:Content[]}>{
         header: Header;
         currentTrack: CurrentTrack;
         trackQueue: TrackQueue;
         model:Model;
-        mutableState:PageState;
 
         constructor(props:{}){
             super(props)
-            this.mutableState = new PageState(new HeaderData("", "", "","","connecting..."), Content.stub(), [])
-            // this.mutableState = new PageState(new HeaderData("", "", "","","connecting..."), Content.dummy(1), [Content.dummy(2), Content.dummy(3), Content.dummy(4)])
-            this.state = this.mutableState.clone()
+            this.state={header:new HeaderData("", "", "","","connecting..."),current:Content.stub(),queue:[]}
         }
 
         componentDidMount() {
 
             this.model = new Model("c-1001244859246", undefined,
             (queue => {
-                this.mutableState.queue = queue
-                this.setState(this.mutableState.clone())
+                this.setState({queue:queue})
             }),
             (header => {
-                this.mutableState.header = header
-                this.setState(this.mutableState.clone())
+                this.setState({header:header})
             }), (current => {
                 if(current!=null){
-                    this.mutableState.current = current
-                    this.setState(this.mutableState.clone())
+                    this.setState({current:current})
                 }
             }))
 
-            this.setState(this.mutableState.clone())
         }
 
         contentStop = (id:number) => {
@@ -277,8 +254,6 @@ import {Model} from "./model"
         }
 
         render() {
-           
-
             return (<div className="page">
                 <div className="fill">
                     <Header data={this.state.header} />

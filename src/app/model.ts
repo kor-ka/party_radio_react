@@ -94,14 +94,13 @@ import { connect, MqttClient } from "mqtt"
 
                         case "boring_list":
                             let list: any[] = msg.data.boring_list
-                            list.forEach(element => {
-                                let c = Content.from(element)
-                                if (c != null && this.lasetPlayed.indexOf(c.originalId) < 0) {
-                                    this.lasetPlayed.push(c.originalId)
-                                    this.boring.push(c)
-                                }
-
-                            });
+                           for(let element of list){
+                            let c = Content.from(element)
+                            if (c != null && this.lasetPlayed.indexOf(c.originalId) < 0) {
+                                this.lasetPlayed.push(c.originalId)
+                                this.boring.push(c)
+                            }
+                           }
                             if (this.current == null) {
                                 this.playNext()
                             } else {
