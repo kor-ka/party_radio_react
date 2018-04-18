@@ -43,7 +43,7 @@ h1 {
     align-items: center;
 }
 
-headerImage{
+.headerImage{
   border-radius: 50%;
   margin: 20px;
   height: 48px;
@@ -98,7 +98,6 @@ headerImage{
   text-align: center;
 }
 
-
 /* content queue */
 .queue{
   display: flex;
@@ -106,4 +105,14 @@ headerImage{
   flex-direction: column;
 }
 
+/* page */
+.page{
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
 
+.fill{
+  align-self: stretch;
+}

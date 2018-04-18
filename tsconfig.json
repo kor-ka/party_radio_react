@@ -12,7 +12,6 @@
     "allowJs": true,
     "jsx": "react",
     "moduleResolution": "node",
-    "rootDir": "packages",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -24,11 +23,7 @@
     "typeRoots": [
       "./node_modules/@types"
     ],
-    "outDir": "lib/",
-    "baseUrl": "packages",
-    "paths": {
-      "openland-api": ["openland-api"]
-    },
+
     "importHelpers": true
   },
   "exclude": [

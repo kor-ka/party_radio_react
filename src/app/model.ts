@@ -1,25 +1,24 @@
-import { Entity } from "./entity";
+import { Content, HeaderData } from "./entity";
 
-import { connect, Client, MqttClient } from "mqtt"
+import { connect, MqttClient } from "mqtt"
 
-export module Model {
-    export interface CurrentChangeCallback { (queue: Entity.Content | undefined): void }
-    export interface QueueChangeCallback { (queue: Entity.Content[]): void }
-    export interface HeaderChangeCallback { (header: Entity.HeaderData): void }
+    export interface CurrentChangeCallback { (queue: Content | undefined): void }
+    export interface QueueChangeCallback { (queue: Content[]): void }
+    export interface HeaderChangeCallback { (header: HeaderData): void }
 
 
     export class Model {
         token: string
-        header = new Entity.HeaderData("", "", "", "", "connecting...")
+        header = new HeaderData("", "", "", "", "connecting...")
         queueChangeCallback: QueueChangeCallback
         headerChangeCallback: HeaderChangeCallback
         currentChangeCallback: CurrentChangeCallback
 
         lasetPlayed: number[] = []
 
-        current?: Entity.Content
-        fresh: Entity.Content[] = []
-        boring: Entity.Content[] = []
+        current?: Content
+        fresh: Content[] = []
+        boring: Content[] = []
 
         client: MqttClient
 
@@ -69,7 +68,6 @@ export module Model {
                         case "init":
                             let title = msg.data.context.title
                             let photo = msg.data.context.photo
-                            let username = msg.data.context.username
 
                             this.header.avatar = photo
                             this.header.title = title
@@ -79,9 +77,9 @@ export module Model {
                             break;
 
                         case "add_content":
-                            let c = Entity.Content.from(msg.data)
+                            let c = Content.from(msg.data)
                             // boring sent via add_content for backward devices capability
-                            if (!c.boring) {
+                            if (c != null && !c.boring) {
                                 this.lasetPlayed.push(c.originalId)
                                 this.fresh.push(c)
 
@@ -97,8 +95,8 @@ export module Model {
                         case "boring_list":
                             let list: any[] = msg.data.boring_list
                             list.forEach(element => {
-                                let c = Entity.Content.from(element)
-                                if (this.lasetPlayed.indexOf(c.originalId) < 0) {
+                                let c = Content.from(element)
+                                if (c != null && this.lasetPlayed.indexOf(c.originalId) < 0) {
                                     this.lasetPlayed.push(c.originalId)
                                     this.boring.push(c)
                                 }
@@ -162,4 +160,3 @@ export module Model {
             this.client.publish("device_out", Buffer.from(JSON.stringify(msg)))
         }
     }
-}

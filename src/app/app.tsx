@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {Componenets} from './componenets'
+import {Page} from './componenets'
 
-let page = ReactDOM.render(
-  <Componenets.Page />,
+ReactDOM.render(
+  <Page />,
   document.getElementById("root")
-) as Componenets.Page
+) as Page
 
 

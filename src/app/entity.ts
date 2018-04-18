@@ -1,28 +1,35 @@
-
-export module Entity {
-
-    export class IContent{orig:number; title: string; owner?:string; boring?:boolean}
+    export interface IContent{orig:number; title: string; owner?:string; boring?:boolean; stub?:boolean}
     export class Content{
         originalId:number
-        src:string
+        src:string | undefined
         title:string
-        sender:string
-        boring:boolean
+        sender:string | undefined
+        boring:boolean | undefined
+        stub:boolean
        
         constructor(from:IContent){
                 this.originalId = from.orig;
                 this.title = from.title;
                 this.sender = from.owner
                 this.boring = from.boring
+                this.stub = from.stub != null && from.stub
             }
 
-        static from(data):Content{
+        static from(data:IContent | any):Content | undefined{
             if(data.audio){
                 return new AudioContent(data.audio)
             }else if(data.youtube_link){
                 return new YoutubeContent(data.youtube_link)
             }
-            return null
+            return undefined
+        }
+
+        static stub(){
+            return new Content({orig:0, title: "", stub: true})
+        }
+
+        static dummy(id:number){
+            return new Content({orig:id, title: "dummy_" + id, stub: true})
         }
     }
 
@@ -65,14 +72,13 @@ export module Entity {
         }
     }
 
-    function getParameterByName(name, url) {
+    function getParameterByName(name:string, url:string):string|undefined {
         if (!url) url = window.location.href;
         name = name.replace(/[\[\]]/g, "\\$&");
         var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
             results = regex.exec(url);
-        if (!results) return null;
+        if (!results) return undefined;
         if (!results[2]) return '';
         return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
     
-}

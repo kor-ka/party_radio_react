@@ -1,15 +1,13 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import { Entity } from './entity';
 import YouTube from 'react-youtube';
-import { Model } from './model'
-export module Componenets {
+import {Content, AudioContent, YoutubeContent, HeaderData} from "./entity"
+import {Model} from "./model"
 
     //
     // TRACK QUEUE
     //
 
-    export class ContentPublicEntry extends React.Component<{ key: number; content: Entity.Content }, {}>{
+    export class ContentPublicEntry extends React.Component<{ key: number; content: Content }, {}>{
         onCreate = (instance: HTMLElement) => {
             const s = document.createElement('script');
             s.type = 'text/javascript';
@@ -28,7 +26,7 @@ export module Componenets {
         }
     }
 
-    export class ContentPrivateEntry extends React.Component<{ key: number; content: Entity.Content }, {}>{
+    export class ContentPrivateEntry extends React.Component<{ key: number; content: Content }, {}>{
         render() {
 
             let subtitle = this.props.content.sender ? (<div className="contentPrivateEntrySender">
@@ -43,11 +41,11 @@ export module Componenets {
         }
     }
 
-    export class TrackQueue extends React.Component<{ contentQueue: Entity.Content[] }, {}>{
+    export class TrackQueue extends React.Component<{ contentQueue: Content[] }, {}>{
         render() {
             let entries = []
 
-            if (this.state && this.props.contentQueue) {
+            if (this.props.contentQueue) {
                 for (let e of this.props.contentQueue) {
                     entries.push(<ContentPrivateEntry key={e.originalId} content={e} />);
                 }
@@ -63,11 +61,11 @@ export module Componenets {
     // CURRENT TRACK
     //
 
-    export class CurrentTrack extends React.Component<{ contentStopCallback: ContentStopCallback, content: Entity.Content }, {}>{
+    export class CurrentTrack extends React.Component<{ contentStopCallback: ContentStopCallback, content: Content }, {}>{
         render() {
-            if (this.props.content instanceof Entity.AudioContent) {
+            if (this.props.content instanceof AudioContent) {
                 return (<CurrentTrackAudio contentStopCallback={this.props.contentStopCallback} content={this.props.content} />)
-            } else if (this.props.content instanceof Entity.YoutubeContent) {
+            } else if (this.props.content instanceof YoutubeContent) {
 
                 const opts = {
                     height: '100%',
@@ -84,9 +82,12 @@ export module Componenets {
                         onError={() => this.props.contentStopCallback(this.props.content.originalId)}
                         onEnd={() => this.props.contentStopCallback(this.props.content.originalId)} />
                 </div>)
+            } else if(!this.props.content.stub){
+                // skip unknown
+                console.log(this.props.content)
+                this.props.contentStopCallback(this.props.content.originalId)
             }
-            // skip unknown
-            this.props.contentStopCallback(this.props.content.originalId)
+          
             return (<div />)
 
         }
@@ -94,7 +95,7 @@ export module Componenets {
 
     }
 
-    export class CurrentTrackAudio extends React.Component<{ contentStopCallback: ContentStopCallback, content: Entity.Content }, { error?: any, progress?: any }>{
+    export class CurrentTrackAudio extends React.Component<{ contentStopCallback: ContentStopCallback, content: Content }, { error?: any, progress?: any }>{
         audio: HTMLAudioElement
 
         isPlaying = false;
@@ -118,7 +119,7 @@ export module Componenets {
 
             var lineStyle = {
                 height: "2px",
-                width: (this.state.progress != null ? this.state.progress : 0) + "%",
+                width: (this.state && this.state.progress != null ? this.state.progress : 0) + "%",
                 backgroundColor: "#000000",
                 position: "absolute" as "absolute",
                 top: "50%",
@@ -192,21 +193,24 @@ export module Componenets {
     //
     // HEADER
     //
-    export class Header extends React.Component<Entity.HeaderData, {}>{
+    export class Header extends React.Component<{data:HeaderData}, {}>{
 
         render() {
 
-            let title = this.props.status ? this.props.status : this.props.title ? this.props.title : ""
+            let title = this.props.data.status ? this.props.data.status : this.props.data.title ? this.props.data.title : ""
 
-            let author = this.props.currentAuthor ? (":" + this.props.currentAuthor) : ""
+            let author = this.props.data.currentAuthor ? (":" + this.props.data.currentAuthor) : ""
 
-            let session =  this.props.sessionId ? this.props.sessionId : ""
+            let session =  this.props.data.sessionId ? this.props.data.sessionId : ""
 
-            let avatar = this.props.avatar
+            let avatar = this.props.data.avatar
 
-           
+            let hideImage = {
+                width: avatar.length === 0 ? "0px" : "48px"
+            }
+
             return (<div className="headerContainer">
-                <img  src={avatar}  className="headerImage" hidden={this.props.avatar.length===0}/>
+                <img  src={avatar}  className="headerImage" style={hideImage} />
                 <h2>{title}</h2>
                 <h2>{author}</h2>
                 <h3 className="headerSession">{session}</h3>
@@ -217,51 +221,72 @@ export module Componenets {
     //
     // PAGE
     //
+    class PageState{
+        header: HeaderData; 
+        current:Content; 
+        queue:Content[];
 
-    export interface ContentStopCallback { (id: number): void }
-    export class Page extends React.Component<{}, {header: Entity.HeaderData, current:Entity.Content, queue:Entity.Content[]}>{
-        header: Header
-        currentTrack: CurrentTrack
-        trackQueue: TrackQueue
-        model:Model.Model
-
-        componentDidMount() {
-            let state = {header: new Entity.HeaderData("", "", "","","connecting..."), current: new Entity.Content()}
-
-            this.model = new Model.Model("c-1001244859246", undefined,
-            (queue => {
-    
-    
-            }),
-            (header => {
-                console.log(header)
-            }), (current => {
-    
-            }))
+        constructor(header: HeaderData, current:Content, queue:Content[]){
+            this.header = header;
+            this.current = current;
+            this.queue = queue;
         }
 
-        render() {
-            var containerStyle = {
-                display: "flex",
-                flexDirection: "column" as "column",
-                justifyContent: "flex-start" as "flex-start",
-                alignItems: "center" as "center"
-            }
-
-            var fillSrtyle = {
-                alignSelf: "stretch" as "stretch"
-            }
-            return (<div style={containerStyle}>
-                <div style={fillSrtyle}>
-                    <Header ref={(h) => { this.header = h; }} />
-                </div>
-                <div style={fillSrtyle}>
-                    <CurrentTrack ref={(ct) => { this.currentTrack = ct; }} contentStopCallback={this.props.contentStopCallback} />
-                </div>
-                <TrackQueue ref={(tq) => { this.trackQueue = tq; }} />
-            </div>);
+        clone(){
+            return new PageState(this.header, this.current, this.queue)
         }
     }
 
+    export interface ContentStopCallback { (id: number): void }
+    export class Page extends React.Component<{}, {header: HeaderData, current:Content, queue:Content[]}>{
+        header: Header;
+        currentTrack: CurrentTrack;
+        trackQueue: TrackQueue;
+        model:Model;
+        mutableState:PageState;
 
-}
+        constructor(props:{}){
+            super(props)
+            this.mutableState = new PageState(new HeaderData("", "", "","","connecting..."), Content.stub(), [])
+            // this.mutableState = new PageState(new HeaderData("", "", "","","connecting..."), Content.dummy(1), [Content.dummy(2), Content.dummy(3), Content.dummy(4)])
+            this.state = this.mutableState.clone()
+        }
+
+        componentDidMount() {
+
+            this.model = new Model("c-1001244859246", undefined,
+            (queue => {
+                this.mutableState.queue = queue
+                this.setState(this.mutableState.clone())
+            }),
+            (header => {
+                this.mutableState.header = header
+                this.setState(this.mutableState.clone())
+            }), (current => {
+                if(current!=null){
+                    this.mutableState.current = current
+                    this.setState(this.mutableState.clone())
+                }
+            }))
+
+            this.setState(this.mutableState.clone())
+        }
+
+        contentStop = (id:number) => {
+            this.model.playNext(id)
+        }
+
+        render() {
+           
+
+            return (<div className="page">
+                <div className="fill">
+                    <Header data={this.state.header} />
+                </div>
+                <div className="fill">
+                    <CurrentTrack content={this.state.current} contentStopCallback={this.contentStop} />
+                </div>
+                <TrackQueue contentQueue={this.state.queue} />
+            </div>);
+        }
+    }
